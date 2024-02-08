@@ -25,6 +25,9 @@ impl<T> RawVec<T> {
     pub fn reserve(&mut self, additional: usize) {
         let new_cap = if self.cap == 0 { Self::START_CAPACITY } else { 2 * self.cap };
         let new_cap = new_cap.max(self.cap + additional);
+        self.resize(new_cap);
+    }
+    pub fn resize(&mut self, new_cap: usize) {
         let new_layout = Layout::array::<T>(new_cap).unwrap();
 
         assert!(isize::try_from(new_layout.size()).is_ok(), "Allocation too large");

@@ -1,7 +1,9 @@
 use core::{
-    fmt, mem,
+    fmt,
+    mem::{self, ManuallyDrop},
     ops::{Deref, DerefMut},
 };
+use std::ptr::NonNull;
 
 #[allow(clippy::module_name_repetitions)]
 pub use crate::raw_vec::RawVec;
@@ -18,6 +20,12 @@ impl<T> Vec<T> {
     #[must_use]
     pub const fn new() -> Self {
         Self { buf: RawVec::new(), len: 0 }
+    }
+    #[must_use]
+    pub fn with_capacity(cap: usize) -> Self {
+        let mut ret = Self::new();
+        ret.reserve(cap);
+        ret
     }
     pub fn push(&mut self, val: T) {
         if self.len == self.cap() {
@@ -95,6 +103,15 @@ impl<T> Vec<T> {
             self.push(val);
         }
     }
+    pub fn shrink_to_fit(&mut self) {
+        self.buf.resize(self.len());
+    }
+    #[must_use]
+    pub fn to_boxed_slice(mut self) -> Box<[T]> {
+        self.shrink_to_fit();
+        let mut vec = ManuallyDrop::new(self);
+        unsafe { Box::from_raw(vec.as_slice_mut()) }
+    }
 }
 
 impl<T> Vec<T> {
@@ -141,6 +158,54 @@ impl<T> DerefMut for Vec<T> {
         unsafe { core::slice::from_raw_parts_mut(self.ptr(), self.len) }
     }
 }
+impl<T> Clone for Vec<T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        self.iter().cloned().collect()
+    }
+}
+impl<T> core::ops::Index<usize> for Vec<T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.as_slice()[index]
+    }
+}
+impl<T> core::ops::IndexMut<usize> for Vec<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.as_slice_mut()[index]
+    }
+}
+
+impl<T> fmt::Debug for Vec<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+
+impl<T> From<Box<[T]>> for Vec<T> {
+    fn from(value: Box<[T]>) -> Self {
+        let cap = value.len();
+        let ptr = NonNull::from(Box::leak(value)).cast();
+
+        Self { buf: RawVec { ptr, cap }, len: cap }
+    }
+}
+
+impl<T> PartialEq for Vec<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.len == other.len && self.iter().eq(other)
+    }
+}
+
+impl<T> Eq for Vec<T> where T: Eq {}
 
 impl<T> IntoIterator for Vec<T> {
     type IntoIter = IntoIter<T>;
@@ -219,23 +284,6 @@ impl<T> FromIterator<T> for Vec<T> {
         vec
     }
 }
-impl<T> fmt::Debug for Vec<T>
-where
-    T: fmt::Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
-    }
-}
-
-impl<T> Clone for Vec<T>
-where
-    T: Clone,
-{
-    fn clone(&self) -> Self {
-        self.iter().cloned().collect()
-    }
-}
 
 #[test]
 fn test_iters() {
@@ -267,4 +315,11 @@ fn test_insert_remove() {
     for i in (0..10).rev() {
         assert_eq!(items.remove(0), i);
     }
+}
+
+#[test]
+fn test_boxed_slice() {
+    let pre = (0..10).collect::<Vec<_>>();
+    let post = pre.clone().to_boxed_slice().into();
+    assert_eq!(pre, post);
 }
