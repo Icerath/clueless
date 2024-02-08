@@ -38,10 +38,8 @@ impl<T> RawVec<T> {
         };
 
         // If allocation fails, `new_ptr` will be null, in which case we abort.
-        self.ptr = match NonNull::new(new_ptr) {
-            Some(p) => p.cast(),
-            None => alloc::handle_alloc_error(new_layout),
-        };
+        self.ptr = NonNull::new(new_ptr)
+            .map_or_else(|| alloc::handle_alloc_error(new_layout), NonNull::cast);
         self.cap = new_cap;
     }
     /// # Safety
