@@ -103,11 +103,11 @@ where
         Some(node.val)
     }
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.buf.len()
     }
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
     #[must_use]
@@ -117,6 +117,9 @@ where
     #[must_use]
     pub fn iter_mut(&mut self) -> IterMut<'_, T, Idx> {
         self.into_iter()
+    }
+    pub fn reserve(&mut self, additional: usize) {
+        self.buf.reserve(additional);
     }
     fn remove_node(&mut self, ptr: Idx) -> Node<T, Idx> {
         let end = &self.buf[self.len() - 1];
