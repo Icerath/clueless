@@ -46,13 +46,22 @@ impl<K, V> HashMap<K, V> {
     pub fn iter_mut(&mut self) -> <&mut Self as IntoIterator>::IntoIter {
         self.into_iter()
     }
+    pub fn keys(&self) -> impl Iterator<Item = &K> {
+        self.iter().map(|entry| entry.0)
+    }
+    pub fn values(&self) -> impl Iterator<Item = &V> {
+        self.iter().map(|entry| entry.1)
+    }
+    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
+        self.iter_mut().map(|entry| entry.1)
+    }
 }
 
 impl<K, V> HashMap<K, V>
 where
     K: Hash + Eq,
 {
-    pub fn insert(&mut self, key: K, val: V) {
+    pub fn insert(&mut self, key: K, val: V) -> Option<(K, V)> {
         if self.buckets.is_empty() {
             self.grow();
         }
@@ -60,7 +69,7 @@ where
         if self.buckets[bucket].len() == Self::MAX_BUCKET_LEN {
             self.grow();
         }
-        self.buckets[bucket].push(key, val);
+        self.buckets[bucket].push(key, val)
     }
     pub fn get<Q>(&mut self, key: &Q) -> Option<&V>
     where
@@ -85,7 +94,6 @@ where
         let bucket = self.get_bucket(key);
         self.buckets[bucket].remove(key)
     }
-
     #[allow(clippy::cast_possible_truncation)]
     fn get_bucket<Q>(&self, key: &Q) -> usize
     where
@@ -108,6 +116,28 @@ where
             let bucket = self.get_bucket(&node.key);
             self.buckets[bucket].push_node(node);
         }
+    }
+}
+
+impl<K, V> Extend<(K, V)> for HashMap<K, V>
+where
+    K: Hash + Eq,
+{
+    fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
+        for (key, val) in iter {
+            self.insert(key, val);
+        }
+    }
+}
+
+impl<K, V> FromIterator<(K, V)> for HashMap<K, V>
+where
+    K: Hash + Eq,
+{
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        let mut ret = Self::default();
+        ret.extend(iter);
+        ret
     }
 }
 
@@ -175,16 +205,16 @@ impl<K, V> Bucket<K, V> {
         }
         len
     }
-    fn push(&mut self, key: K, val: V) {
-        self.push_node(Box::new(Node { next: None, key, val }));
+    fn push(&mut self, key: K, val: V) -> Option<(K, V)> {
+        let node = self.push_node(Box::new(Node { next: None, key, val }))?;
+        Some((node.key, node.val))
     }
-    fn push_node(&mut self, val: Box<Node<K, V>>) {
+    fn push_node(&mut self, val: Box<Node<K, V>>) -> Option<Box<Node<K, V>>> {
         let mut head = &mut self.head;
         while let Some(current) = head {
             head = &mut current.next;
         }
-        assert!(head.is_none());
-        head.replace(val);
+        head.replace(val)
     }
     fn get<Q>(&self, key: &Q) -> Option<&V>
     where
@@ -288,9 +318,6 @@ pub fn test_basics() {
 
 #[test]
 pub fn test_growth() {
-    let mut map = HashMap::new();
-    for i in 0..100 {
-        map.insert(i, i * 2);
-    }
+    let map = (0..1000).map(|i| (i, i * 2)).collect::<HashMap<_, _>>();
     assert_ne!(map.capacity(), HashMap::<(), ()>::START_CAPACITY);
 }
