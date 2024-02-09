@@ -13,17 +13,14 @@ pub struct HashMap<K, V, S = RandomState> {
     hasher: S,
 }
 
-impl<K, V, S> HashMap<K, V, S>
-where
-    S: Default,
-{
+impl<K, V> HashMap<K, V> {
     #[must_use]
     pub fn new() -> Self {
-        Self { buckets: Box::from([]), hasher: S::default() }
+        Self { buckets: Box::from([]), hasher: RandomState::new() }
     }
 }
 
-impl<K, V> HashMap<K, V> {
+impl<K, V, S> HashMap<K, V, S> {
     const MAX_BUCKET_LEN: usize = 6;
     const START_CAPACITY: usize = 8;
     #[must_use]
@@ -57,9 +54,10 @@ impl<K, V> HashMap<K, V> {
     }
 }
 
-impl<K, V> HashMap<K, V>
+impl<K, V, S> HashMap<K, V, S>
 where
     K: Hash + Eq,
+    S: BuildHasher,
 {
     pub fn insert(&mut self, key: K, val: V) -> Option<(K, V)> {
         if self.buckets.is_empty() {
@@ -119,9 +117,10 @@ where
     }
 }
 
-impl<K, V> Extend<(K, V)> for HashMap<K, V>
+impl<K, V, S> Extend<(K, V)> for HashMap<K, V, S>
 where
     K: Hash + Eq,
+    S: BuildHasher,
 {
     fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
         for (key, val) in iter {
@@ -130,9 +129,10 @@ where
     }
 }
 
-impl<K, V> FromIterator<(K, V)> for HashMap<K, V>
+impl<K, V, S> FromIterator<(K, V)> for HashMap<K, V, S>
 where
     K: Hash + Eq,
+    S: Default + BuildHasher,
 {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut ret = Self::default();
@@ -141,7 +141,7 @@ where
     }
 }
 
-impl<K, V> IntoIterator for HashMap<K, V> {
+impl<K, V, S> IntoIterator for HashMap<K, V, S> {
     type Item = (K, V);
     type IntoIter = impl Iterator<Item = (K, V)>;
     fn into_iter(self) -> Self::IntoIter {
@@ -151,7 +151,7 @@ impl<K, V> IntoIterator for HashMap<K, V> {
     }
 }
 
-impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
+impl<'a, K, V, S> IntoIterator for &'a HashMap<K, V, S> {
     type Item = (&'a K, &'a V);
     type IntoIter = impl Iterator<Item = (&'a K, &'a V)>;
     fn into_iter(self) -> Self::IntoIter {
@@ -159,7 +159,7 @@ impl<'a, K, V> IntoIterator for &'a HashMap<K, V> {
     }
 }
 
-impl<'a, K, V> IntoIterator for &'a mut HashMap<K, V> {
+impl<'a, K, V, S> IntoIterator for &'a mut HashMap<K, V, S> {
     type Item = (&'a K, &'a mut V);
     type IntoIter = impl Iterator<Item = (&'a K, &'a mut V)>;
     fn into_iter(self) -> Self::IntoIter {
@@ -167,9 +167,12 @@ impl<'a, K, V> IntoIterator for &'a mut HashMap<K, V> {
     }
 }
 
-impl<K, V> Default for HashMap<K, V> {
+impl<K, V, S> Default for HashMap<K, V, S>
+where
+    S: Default,
+{
     fn default() -> Self {
-        Self::new()
+        Self { buckets: Box::from([]), hasher: S::default() }
     }
 }
 
