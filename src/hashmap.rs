@@ -8,18 +8,18 @@ use core::{
 };
 use std::hash::RandomState;
 
-pub struct HashMap<K, V, H = RandomState> {
+pub struct HashMap<K, V, S = RandomState> {
     buckets: Box<[Bucket<K, V>]>,
-    hasher: H,
+    hasher: S,
 }
 
-impl<K, V, H> HashMap<K, V, H>
+impl<K, V, S> HashMap<K, V, S>
 where
-    H: Default,
+    S: Default,
 {
     #[must_use]
     pub fn new() -> Self {
-        Self { buckets: Box::from([]), hasher: H::default() }
+        Self { buckets: Box::from([]), hasher: S::default() }
     }
 }
 
