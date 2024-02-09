@@ -93,16 +93,6 @@ impl<T> Vec<T> {
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(additional);
     }
-    pub fn extend<I>(&mut self, iter: I)
-    where
-        I: IntoIterator<Item = T>,
-    {
-        let iter = iter.into_iter();
-        self.reserve(iter.size_hint().0);
-        for val in iter {
-            self.push(val);
-        }
-    }
     pub fn shrink_to_fit(&mut self) {
         self.buf.resize(self.len());
     }
@@ -111,6 +101,16 @@ impl<T> Vec<T> {
         self.shrink_to_fit();
         let mut vec = ManuallyDrop::new(self);
         unsafe { Box::from_raw(vec.as_slice_mut()) }
+    }
+}
+
+impl<T> Extend<T> for Vec<T> {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        let iter = iter.into_iter();
+        self.reserve(iter.size_hint().0);
+        for val in iter {
+            self.push(val);
+        }
     }
 }
 
