@@ -63,19 +63,28 @@ where
         if self.buckets.is_empty() {
             self.grow();
         }
-        let bucket = self.get_bucket(&key);
+        let bucket = self.get_bucket_unchecked(&key);
+        let prev_entry = self.buckets[bucket].push(key, val);
         if self.buckets[bucket].len() == Self::MAX_BUCKET_LEN {
             self.grow();
         }
-        self.buckets[bucket].push(key, val)
+        prev_entry
     }
-    pub fn get<Q>(&mut self, key: &Q) -> Option<&V>
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        let bucket = self.get_bucket(key);
+        let bucket = self.get_bucket(key)?;
         self.buckets[bucket].get(key)
+    }
+    pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        let bucket = self.get_bucket(key)?;
+        self.buckets[bucket].get_mut(key)
     }
     pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
     where
@@ -89,11 +98,29 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        let bucket = self.get_bucket(key);
+        let bucket = self.get_bucket(key)?;
         self.buckets[bucket].remove(key)
     }
+    pub fn contains_key<Q>(&self, key: &Q) -> bool
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        self.get(key).is_some()
+    }
     #[allow(clippy::cast_possible_truncation)]
-    fn get_bucket<Q>(&self, key: &Q) -> usize
+    fn get_bucket<Q>(&self, key: &Q) -> Option<usize>
+    where
+        K: Borrow<Q>,
+        Q: Hash + Eq + ?Sized,
+    {
+        if self.is_empty() {
+            return None;
+        }
+        Some(self.get_bucket_unchecked(key))
+    }
+    #[allow(clippy::cast_possible_truncation)]
+    fn get_bucket_unchecked<Q>(&self, key: &Q) -> usize
     where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
@@ -111,7 +138,7 @@ where
             std::iter::repeat_with(Bucket::new).take(self.buckets.len() * 2).collect();
         let old_buckets = mem::replace(&mut self.buckets, new_buckets);
         for node in Vec::from(old_buckets).into_iter().flatten() {
-            let bucket = self.get_bucket(&node.key);
+            let bucket = self.get_bucket_unchecked(&node.key);
             self.buckets[bucket].push_node(node);
         }
     }
@@ -230,6 +257,20 @@ impl<K, V> Bucket<K, V> {
                 return Some(&current.val);
             }
             head = &current.next;
+        }
+        None
+    }
+    fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
+    where
+        K: Borrow<Q>,
+        Q: Eq + ?Sized,
+    {
+        let mut head = &mut self.head;
+        while let Some(current) = head {
+            if current.key.borrow() == key {
+                return Some(&mut current.val);
+            }
+            head = &mut current.next;
         }
         None
     }
