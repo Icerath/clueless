@@ -33,6 +33,13 @@ where
     pub fn insert(&mut self, val: T) -> Option<T> {
         self.inner.insert(val, ()).map(|entry| entry.0)
     }
+    pub fn contains<Q>(&self, val: &Q) -> bool
+    where
+        T: Borrow<Q>,
+        Q: Hash + Eq,
+    {
+        self.inner.contains_key(val)
+    }
     pub fn remove<Q>(&mut self, val: &Q) -> Option<T>
     where
         T: Borrow<Q>,
@@ -83,5 +90,16 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_set().entries(self).finish()
+    }
+}
+
+#[test]
+fn test_basics() {
+    let set = (0..1000).collect::<HashSet<_>>();
+    for i in 0..1000 {
+        assert!(set.contains(&i), "{i}");
+    }
+    for i in 1000..2000 {
+        assert!(!set.contains(&i), "{i}");
     }
 }
