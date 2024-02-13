@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [lints.clippy]
-pedantic = { level = "warn", priority = -1 }
-nursery = { level = "warn", priority = -1 }
+pedantic = "warn"
+nursery = "warn"

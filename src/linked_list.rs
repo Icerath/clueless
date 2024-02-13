@@ -1,9 +1,9 @@
-// Can't be forbid until I can fix the iter mut impls.
-// Potentially need lending iterators
+// FIXME: Replace with forbid when possible.
 #![deny(unsafe_code)]
 
-use crate::vec::{self, Vec};
 use core::fmt;
+
+use crate::vec::{self, Vec};
 
 pub mod small {
     #[allow(private_interfaces)]
@@ -29,10 +29,12 @@ mod private {
 
 impl Index for u32 {
     const NIL: Self = Self::MAX;
+
     #[inline]
     fn usize(self) -> usize {
         self as usize
     }
+
     #[inline]
     fn from_usize(val: usize) -> Self {
         val.try_into().expect("Linked List grew too large")
@@ -41,9 +43,11 @@ impl Index for u32 {
 
 impl Index for usize {
     const NIL: Self = Self::MAX;
+
     fn usize(self) -> usize {
         self
     }
+
     fn from_usize(val: usize) -> Self {
         val
     }
@@ -64,6 +68,7 @@ where
     pub const fn new() -> Self {
         Self { buf: Vec::new(), head: Idx::NIL, tail: Idx::NIL }
     }
+
     pub fn push_back(&mut self, val: T) {
         let ptr = self.push_buf(Node { val, prev: self.tail, next: Idx::NIL });
         if self.head == Idx::NIL {
@@ -74,6 +79,7 @@ where
         }
         self.tail = ptr;
     }
+
     pub fn push_front(&mut self, val: T) {
         let ptr = self.push_buf(Node { val, next: self.head, prev: Idx::NIL });
         if self.tail == Idx::NIL {
@@ -84,6 +90,7 @@ where
         }
         self.head = ptr;
     }
+
     pub fn pop_back(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
@@ -95,6 +102,7 @@ where
         }
         Some(node.val)
     }
+
     pub fn pop_front(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
@@ -106,25 +114,31 @@ where
         }
         Some(node.val)
     }
+
     #[must_use]
     pub const fn len(&self) -> usize {
         self.buf.len()
     }
+
     #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     #[must_use]
     pub fn iter(&self) -> Iter<'_, T, Idx> {
         self.into_iter()
     }
+
     #[must_use]
     pub fn iter_mut(&mut self) -> IterMut<'_, T, Idx> {
         self.into_iter()
     }
+
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(additional);
     }
+
     fn remove_node(&mut self, ptr: Idx) -> Node<T, Idx> {
         let end = &self.buf[self.len() - 1];
         let (end_prev, end_next) = (end.prev, end.next);
@@ -145,6 +159,7 @@ where
         }
         node
     }
+
     fn push_buf(&mut self, node: Node<T, Idx>) -> Idx {
         let ptr = self.buf.len();
         self.buf.push(node);
@@ -171,15 +186,18 @@ where
     Idx: Index,
 {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         self.list.pop_front()
     }
+
     fn count(self) -> usize
     where
         Self: Sized,
     {
         self.len()
     }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.len(), Some(self.len()))
     }
@@ -202,6 +220,7 @@ where
 {
     type IntoIter = IntoIter<T, Idx>;
     type Item = T;
+
     fn into_iter(self) -> Self::IntoIter {
         IntoIter { list: self }
     }
@@ -219,18 +238,21 @@ where
     Idx: Index,
 {
     type Item = &'a T;
+
     fn next(&mut self) -> Option<Self::Item> {
         self.len = self.len.checked_sub(1)?;
         let val = &self.list.buf[self.head.usize()].val;
         self.head = self.list.buf[self.head.usize()].next;
         Some(val)
     }
+
     fn count(self) -> usize
     where
         Self: Sized,
     {
         self.len()
     }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.len(), Some(self.len()))
     }
@@ -254,8 +276,9 @@ impl<'a, T, Idx> IntoIterator for &'a LinkedList<T, Idx>
 where
     Idx: Index,
 {
-    type Item = &'a T;
     type IntoIter = Iter<'a, T, Idx>;
+    type Item = &'a T;
+
     fn into_iter(self) -> Self::IntoIter {
         Iter { list: self, head: self.head, tail: self.tail, len: self.len() }
     }
@@ -274,6 +297,7 @@ where
     Idx: Index,
 {
     type Item = &'a mut T;
+
     fn next(&mut self) -> Option<Self::Item> {
         self.len = self.len.checked_sub(1)?;
         let head = self.head;
@@ -308,6 +332,7 @@ where
 {
     type IntoIter = IterMut<'a, T, Idx>;
     type Item = &'a mut T;
+
     fn into_iter(self) -> Self::IntoIter {
         IterMut { head: self.head, tail: self.tail, len: self.len(), list: self }
     }

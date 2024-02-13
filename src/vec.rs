@@ -4,8 +4,8 @@ use core::{
     fmt,
     mem::{self, ManuallyDrop},
     ops::{Deref, DerefMut},
+    ptr::NonNull,
 };
-use std::ptr::NonNull;
 
 #[allow(clippy::module_name_repetitions)]
 pub use crate::raw_vec::RawVec;
@@ -23,12 +23,14 @@ impl<T> Vec<T> {
     pub const fn new() -> Self {
         Self { buf: RawVec::new(), len: 0 }
     }
+
     #[must_use]
     pub fn with_capacity(cap: usize) -> Self {
         let mut ret = Self::new();
         ret.reserve(cap);
         ret
     }
+
     pub fn push(&mut self, val: T) {
         if self.len == self.cap() {
             self.buf.grow();
@@ -36,6 +38,7 @@ impl<T> Vec<T> {
         unsafe { self.buf.write(self.len, val) };
         self.len += 1;
     }
+
     pub fn pop(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
@@ -43,6 +46,7 @@ impl<T> Vec<T> {
         self.len -= 1;
         Some(unsafe { self.buf.read(self.len) })
     }
+
     /// # Errors
     /// Will return an Err when `index > len`
     pub fn try_insert(&mut self, index: usize, val: T) -> Result<(), IndexNotFound> {
@@ -59,6 +63,7 @@ impl<T> Vec<T> {
         self.len += 1;
         Ok(())
     }
+
     /// # Errors
     /// Will return an Err when `index >= len`
     pub fn try_remove(&mut self, index: usize) -> Result<T, IndexNotFound> {
@@ -72,6 +77,7 @@ impl<T> Vec<T> {
             Ok(result)
         }
     }
+
     /// # Errors
     /// Will return an Err when `index >= len`
     pub fn try_swap_remove(&mut self, index: usize) -> Result<T, IndexNotFound> {
@@ -82,31 +88,38 @@ impl<T> Vec<T> {
         self.swap(index, len - 1);
         self.pop().ok_or(IndexNotFound)
     }
+
     /// # Panics
     /// Panics if `index > len`.
     pub fn insert(&mut self, index: usize, val: T) {
         self.try_insert(index, val)
             .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len));
     }
+
     /// # Panics
     /// Panics if `index >= len`.
     pub fn remove(&mut self, index: usize) -> T {
         self.try_remove(index)
             .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len))
     }
+
     /// # Panics
     /// Panics if `index >= len`.
     pub fn swap_remove(&mut self, index: usize) -> T {
         self.try_swap_remove(index)
             .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len))
     }
-    /// Makes space for at least additional MORE elem while keeping exponential growth.
+
+    /// Makes space for at least additional MORE elem while keeping exponential
+    /// growth.
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(additional);
     }
+
     pub fn shrink_to_fit(&mut self) {
         self.buf.resize(self.len());
     }
+
     #[must_use]
     pub fn to_boxed_slice(mut self) -> Box<[T]> {
         self.shrink_to_fit();
@@ -130,22 +143,27 @@ impl<T> Vec<T> {
     pub const fn len(&self) -> usize {
         self.len
     }
+
     #[must_use]
     pub const fn cap(&self) -> usize {
         self.buf.cap
     }
+
     #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
+
     #[must_use]
     pub const fn ptr(&self) -> *mut T {
         self.buf.ptr.as_ptr()
     }
+
     #[must_use]
     pub fn as_slice(&self) -> &[T] {
         self
     }
+
     #[must_use]
     pub fn as_slice_mut(&mut self) -> &mut [T] {
         self
@@ -160,6 +178,7 @@ impl<T> Default for Vec<T> {
 
 impl<T> Deref for Vec<T> {
     type Target = [T];
+
     fn deref(&self) -> &Self::Target {
         unsafe { core::slice::from_raw_parts(self.ptr(), self.len) }
     }
@@ -179,6 +198,7 @@ where
 }
 impl<T> core::ops::Index<usize> for Vec<T> {
     type Output = T;
+
     fn index(&self, index: usize) -> &Self::Output {
         &self.as_slice()[index]
     }
@@ -221,6 +241,7 @@ impl<T> Eq for Vec<T> where T: Eq {}
 impl<T> IntoIterator for Vec<T> {
     type IntoIter = IntoIter<T>;
     type Item = T;
+
     fn into_iter(mut self) -> Self::IntoIter {
         let buf = mem::take(&mut self.buf);
         let len = self.len;
@@ -232,6 +253,7 @@ impl<T> IntoIterator for Vec<T> {
 impl<'a, T> IntoIterator for &'a Vec<T> {
     type IntoIter = core::slice::Iter<'a, T>;
     type Item = &'a T;
+
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -239,6 +261,7 @@ impl<'a, T> IntoIterator for &'a Vec<T> {
 impl<'a, T> IntoIterator for &'a mut Vec<T> {
     type IntoIter = core::slice::IterMut<'a, T>;
     type Item = &'a mut T;
+
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }
@@ -252,6 +275,7 @@ pub struct IntoIter<T> {
 
 impl<T> Iterator for IntoIter<T> {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.current == self.end {
             return None;
@@ -260,6 +284,7 @@ impl<T> Iterator for IntoIter<T> {
         self.current += 1;
         Some(val)
     }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.len(), Some(self.len()))
     }

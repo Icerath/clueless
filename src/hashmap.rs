@@ -1,7 +1,5 @@
 #![forbid(unsafe_code)]
 
-use crate::Vec;
-
 use core::{
     borrow::Borrow,
     fmt,
@@ -9,6 +7,8 @@ use core::{
     mem,
 };
 use std::hash::RandomState;
+
+use crate::Vec;
 
 pub struct HashMap<K, V, S = RandomState> {
     buckets: Box<[Bucket<K, V>]>,
@@ -25,32 +25,40 @@ impl<K, V> HashMap<K, V> {
 impl<K, V, S> HashMap<K, V, S> {
     const MAX_BUCKET_LEN: usize = 6;
     const START_CAPACITY: usize = 8;
+
     #[must_use]
     pub fn len(&self) -> usize {
         self.buckets.iter().map(Bucket::len).sum()
     }
+
     #[must_use]
     pub const fn capacity(&self) -> usize {
         self.buckets.len()
     }
+
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     #[must_use]
     pub fn iter(&self) -> <&Self as IntoIterator>::IntoIter {
         self.into_iter()
     }
+
     #[must_use]
     pub fn iter_mut(&mut self) -> <&mut Self as IntoIterator>::IntoIter {
         self.into_iter()
     }
+
     pub fn keys(&self) -> impl Iterator<Item = &K> {
         self.iter().map(|entry| entry.0)
     }
+
     pub fn values(&self) -> impl Iterator<Item = &V> {
         self.iter().map(|entry| entry.1)
     }
+
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
         self.iter_mut().map(|entry| entry.1)
     }
@@ -72,6 +80,7 @@ where
         }
         prev_entry
     }
+
     pub fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
@@ -80,6 +89,7 @@ where
         let bucket = self.get_bucket(key)?;
         self.buckets[bucket].get(key)
     }
+
     pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
@@ -88,6 +98,7 @@ where
         let bucket = self.get_bucket(key)?;
         self.buckets[bucket].get_mut(key)
     }
+
     pub fn remove<Q>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q>,
@@ -95,6 +106,7 @@ where
     {
         self.remove_entry(key).map(|(_k, v)| v)
     }
+
     pub fn remove_entry<Q>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
@@ -103,6 +115,7 @@ where
         let bucket = self.get_bucket(key)?;
         self.buckets[bucket].remove(key)
     }
+
     pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
@@ -110,6 +123,7 @@ where
     {
         self.get(key).is_some()
     }
+
     #[allow(clippy::cast_possible_truncation)]
     fn get_bucket<Q>(&self, key: &Q) -> Option<usize>
     where
@@ -121,6 +135,7 @@ where
         }
         Some(self.get_bucket_unchecked(key))
     }
+
     #[allow(clippy::cast_possible_truncation)]
     fn get_bucket_unchecked<Q>(&self, key: &Q) -> usize
     where
@@ -131,6 +146,7 @@ where
         let bucket = hash % self.buckets.len() as u64;
         bucket as usize
     }
+
     fn grow(&mut self) {
         if self.buckets.is_empty() {
             return self.buckets =
@@ -172,7 +188,9 @@ where
 
 impl<K, V, S> IntoIterator for HashMap<K, V, S> {
     type Item = (K, V);
+
     type IntoIter = impl Iterator<Item = (K, V)>;
+
     fn into_iter(self) -> Self::IntoIter {
         Vec::from(self.buckets)
             .into_iter()
@@ -182,7 +200,9 @@ impl<K, V, S> IntoIterator for HashMap<K, V, S> {
 
 impl<'a, K, V, S> IntoIterator for &'a HashMap<K, V, S> {
     type Item = (&'a K, &'a V);
+
     type IntoIter = impl Iterator<Item = (&'a K, &'a V)>;
+
     fn into_iter(self) -> Self::IntoIter {
         self.buckets.iter().flatten()
     }
@@ -190,7 +210,9 @@ impl<'a, K, V, S> IntoIterator for &'a HashMap<K, V, S> {
 
 impl<'a, K, V, S> IntoIterator for &'a mut HashMap<K, V, S> {
     type Item = (&'a K, &'a mut V);
+
     type IntoIter = impl Iterator<Item = (&'a K, &'a mut V)>;
+
     fn into_iter(self) -> Self::IntoIter {
         self.buckets.iter_mut().flatten()
     }
@@ -228,6 +250,7 @@ impl<K, V> Bucket<K, V> {
     const fn new() -> Self {
         Self { head: None }
     }
+
     const fn len(&self) -> usize {
         let mut head = &self.head;
         let mut len = 0;
@@ -237,10 +260,12 @@ impl<K, V> Bucket<K, V> {
         }
         len
     }
+
     fn push(&mut self, key: K, val: V) -> Option<(K, V)> {
         let node = self.push_node(Box::new(Node { next: None, key, val }))?;
         Some((node.key, node.val))
     }
+
     fn push_node(&mut self, val: Box<Node<K, V>>) -> Option<Box<Node<K, V>>> {
         let mut head = &mut self.head;
         while let Some(current) = head {
@@ -248,6 +273,7 @@ impl<K, V> Bucket<K, V> {
         }
         head.replace(val)
     }
+
     fn get<Q>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
@@ -262,6 +288,7 @@ impl<K, V> Bucket<K, V> {
         }
         None
     }
+
     fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
@@ -276,6 +303,7 @@ impl<K, V> Bucket<K, V> {
         }
         None
     }
+
     fn remove<Q>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
@@ -297,8 +325,10 @@ impl<K, V> Bucket<K, V> {
 }
 
 impl<K, V> IntoIterator for Bucket<K, V> {
-    type IntoIter = impl Iterator<Item = Box<Node<K, V>>>;
     type Item = Box<Node<K, V>>;
+
+    type IntoIter = impl Iterator<Item = Box<Node<K, V>>>;
+
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head;
         std::iter::from_fn(move || {
@@ -311,8 +341,10 @@ impl<K, V> IntoIterator for Bucket<K, V> {
 }
 
 impl<'a, K, V> IntoIterator for &'a Bucket<K, V> {
-    type IntoIter = impl Iterator<Item = (&'a K, &'a V)>;
     type Item = (&'a K, &'a V);
+
+    type IntoIter = impl Iterator<Item = (&'a K, &'a V)>;
+
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head.as_deref();
         std::iter::from_fn(move || {
@@ -324,8 +356,10 @@ impl<'a, K, V> IntoIterator for &'a Bucket<K, V> {
 }
 
 impl<'a, K, V> IntoIterator for &'a mut Bucket<K, V> {
-    type IntoIter = impl Iterator<Item = (&'a K, &'a mut V)>;
     type Item = (&'a K, &'a mut V);
+
+    type IntoIter = impl Iterator<Item = (&'a K, &'a mut V)>;
+
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head.as_deref_mut();
         std::iter::from_fn(move || {

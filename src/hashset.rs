@@ -1,8 +1,13 @@
 #![forbid(unsafe_code)]
 
+use core::{
+    borrow::Borrow,
+    fmt,
+    hash::{BuildHasher, Hash},
+};
+use std::hash::RandomState;
+
 use crate::HashMap;
-use core::{borrow::Borrow, fmt, hash::Hash};
-use std::hash::{BuildHasher, RandomState};
 
 pub struct HashSet<T, S = RandomState> {
     inner: HashMap<T, (), S>,
@@ -19,10 +24,12 @@ impl<T, S> HashSet<T, S> {
     pub fn len(&self) -> usize {
         self.inner.len()
     }
+
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.into_iter()
     }
@@ -35,6 +42,7 @@ where
     pub fn insert(&mut self, val: T) -> Option<T> {
         self.inner.insert(val, ()).map(|entry| entry.0)
     }
+
     pub fn contains<Q>(&self, val: &Q) -> bool
     where
         T: Borrow<Q>,
@@ -42,6 +50,7 @@ where
     {
         self.inner.contains_key(val)
     }
+
     pub fn remove<Q>(&mut self, val: &Q) -> Option<T>
     where
         T: Borrow<Q>,
@@ -63,7 +72,9 @@ where
 
 impl<T, S> IntoIterator for HashSet<T, S> {
     type Item = T;
+
     type IntoIter = impl Iterator<Item = T>;
+
     fn into_iter(self) -> Self::IntoIter {
         self.inner.into_iter().map(|entry| entry.0)
     }
@@ -71,7 +82,9 @@ impl<T, S> IntoIterator for HashSet<T, S> {
 
 impl<'a, T, S> IntoIterator for &'a HashSet<T, S> {
     type Item = &'a T;
+
     type IntoIter = impl Iterator<Item = &'a T>;
+
     fn into_iter(self) -> Self::IntoIter {
         self.inner.iter().map(|entry| entry.0)
     }
