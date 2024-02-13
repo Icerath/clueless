@@ -190,11 +190,13 @@ impl<T> Deref for Vec<T> {
         unsafe { core::slice::from_raw_parts(self.ptr(), self.len) }
     }
 }
+
 impl<T> DerefMut for Vec<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { core::slice::from_raw_parts_mut(self.ptr(), self.len) }
     }
 }
+
 impl<T> Clone for Vec<T>
 where
     T: Clone,
@@ -203,6 +205,7 @@ where
         self.iter().cloned().collect()
     }
 }
+
 impl<T> core::ops::Index<usize> for Vec<T> {
     type Output = T;
 
@@ -210,6 +213,7 @@ impl<T> core::ops::Index<usize> for Vec<T> {
         &self.as_slice()[index]
     }
 }
+
 impl<T> core::ops::IndexMut<usize> for Vec<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.as_slice_mut()[index]
@@ -257,6 +261,7 @@ impl<T> IntoIterator for Vec<T> {
         IntoIter { buf, current: 0, end: len }
     }
 }
+
 impl<'a, T> IntoIterator for &'a Vec<T> {
     type IntoIter = core::slice::Iter<'a, T>;
     type Item = &'a T;
@@ -265,6 +270,7 @@ impl<'a, T> IntoIterator for &'a Vec<T> {
         self.iter()
     }
 }
+
 impl<'a, T> IntoIterator for &'a mut Vec<T> {
     type IntoIter = core::slice::IterMut<'a, T>;
     type Item = &'a mut T;

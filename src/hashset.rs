@@ -19,6 +19,7 @@ impl<T> HashSet<T> {
         Self { inner: HashMap::new() }
     }
 }
+
 impl<T, S> HashSet<T, S> {
     #[must_use]
     pub fn len(&self) -> usize {
@@ -34,6 +35,7 @@ impl<T, S> HashSet<T, S> {
         self.into_iter()
     }
 }
+
 impl<T, S> HashSet<T, S>
 where
     T: Hash + Eq,
