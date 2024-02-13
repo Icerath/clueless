@@ -27,6 +27,8 @@ impl<T> RawVec<T> {
         let new_cap = new_cap.max(self.cap + additional);
         self.resize(new_cap);
     }
+    /// # Panics
+    /// Panics if `new_cap * size_of::<T> > isize::MAX`
     pub fn resize(&mut self, new_cap: usize) {
         let new_layout = Layout::array::<T>(new_cap).unwrap();
 

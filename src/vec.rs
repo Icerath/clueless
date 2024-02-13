@@ -41,6 +41,8 @@ impl<T> Vec<T> {
         self.len -= 1;
         Some(unsafe { self.buf.read(self.len) })
     }
+    /// # Errors
+    /// Will return an Err when `index > len`
     pub fn try_insert(&mut self, index: usize, val: T) -> Result<(), IndexNotFound> {
         if index > self.len {
             return Err(IndexNotFound);
@@ -55,6 +57,8 @@ impl<T> Vec<T> {
         self.len += 1;
         Ok(())
     }
+    /// # Errors
+    /// Will return an Err when `index >= len`
     pub fn try_remove(&mut self, index: usize) -> Result<T, IndexNotFound> {
         if index >= self.len {
             return Err(IndexNotFound);
@@ -66,28 +70,33 @@ impl<T> Vec<T> {
             Ok(result)
         }
     }
-    pub fn insert(&mut self, index: usize, val: T) {
-        assert!(self.try_insert(index, val).is_ok(), "index was {index} when len was {}", self.len);
-    }
-    pub fn remove(&mut self, index: usize) -> T {
-        match self.try_remove(index) {
-            Ok(val) => val,
-            Err(IndexNotFound) => panic!("index was {index} when len was {}", self.len),
-        }
-    }
+    /// # Errors
+    /// Will return an Err when `index >= len`
     pub fn try_swap_remove(&mut self, index: usize) -> Result<T, IndexNotFound> {
-        if self.len == 0 {
+        if index >= self.len {
             return Err(IndexNotFound);
         }
         let len = self.len;
         self.swap(index, len - 1);
         self.pop().ok_or(IndexNotFound)
     }
+    /// # Panics
+    /// Panics if `index > len`.
+    pub fn insert(&mut self, index: usize, val: T) {
+        self.try_insert(index, val)
+            .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len));
+    }
+    /// # Panics
+    /// Panics if `index >= len`.
+    pub fn remove(&mut self, index: usize) -> T {
+        self.try_remove(index)
+            .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len))
+    }
+    /// # Panics
+    /// Panics if `index >= len`.
     pub fn swap_remove(&mut self, index: usize) -> T {
-        match self.try_swap_remove(index) {
-            Ok(val) => val,
-            Err(IndexNotFound) => panic!("index was {index} when len was {}", self.len),
-        }
+        self.try_swap_remove(index)
+            .unwrap_or_else(|_| panic!("index was {index} when len was {}", self.len))
     }
     /// Makes space for at least additional MORE elem while keeping exponential growth.
     pub fn reserve(&mut self, additional: usize) {

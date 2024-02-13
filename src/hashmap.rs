@@ -288,9 +288,7 @@ impl<K, V> Bucket<K, V> {
                     *current = node.next.take();
                     return Some((node.key, node.val));
                 }
-                Some(node) => {
-                    current = &mut node.next;
-                }
+                Some(node) => current = &mut node.next,
             }
         }
     }
@@ -337,7 +335,7 @@ impl<'a, K, V> IntoIterator for &'a mut Bucket<K, V> {
 }
 
 #[test]
-pub fn test_basics() {
+fn test_basics() {
     let mut map = HashMap::new();
 
     assert_eq!(map.capacity(), 0);
@@ -361,7 +359,7 @@ pub fn test_basics() {
 }
 
 #[test]
-pub fn test_growth() {
+fn test_growth() {
     let map = (0..1000).map(|i| (i, i * 2)).collect::<HashMap<_, _>>();
     assert_ne!(map.capacity(), HashMap::<(), ()>::START_CAPACITY);
 }
