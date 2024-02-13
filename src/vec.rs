@@ -128,7 +128,7 @@ impl<T> Vec<T> {
     }
 
     #[must_use]
-    pub fn to_boxed_slice(mut self) -> Box<[T]> {
+    pub fn into_boxed_slice(mut self) -> Box<[T]> {
         self.shrink_to_fit();
         let mut vec = ManuallyDrop::new(self);
         unsafe { Box::from_raw(vec.as_slice_mut()) }
@@ -363,6 +363,6 @@ fn test_insert_remove() {
 #[test]
 fn test_boxed_slice() {
     let pre = (0..10).collect::<Vec<_>>();
-    let post = pre.clone().to_boxed_slice().into();
+    let post = pre.clone().into_boxed_slice().into();
     assert_eq!(pre, post);
 }
