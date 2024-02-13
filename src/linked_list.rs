@@ -3,12 +3,13 @@
 
 use core::fmt;
 
-use crate::vec::{self, Vec};
+use crate::vec::Vec;
 
 pub mod small {
     #[allow(private_interfaces)]
     pub type LinkedList<T> = super::LinkedList<T, u32>;
 }
+
 pub mod large {
     #[allow(private_interfaces)]
     pub type LinkedList<T> = super::LinkedList<T, usize>;
@@ -191,10 +192,7 @@ where
         self.list.pop_front()
     }
 
-    fn count(self) -> usize
-    where
-        Self: Sized,
-    {
+    fn count(self) -> usize {
         self.len()
     }
 
@@ -246,10 +244,7 @@ where
         Some(val)
     }
 
-    fn count(self) -> usize
-    where
-        Self: Sized,
-    {
+    fn count(self) -> usize {
         self.len()
     }
 
@@ -338,7 +333,6 @@ where
     }
 }
 
-// FromIter
 impl<T, Idx> FromIterator<T> for LinkedList<T, Idx>
 where
     Idx: Index,
@@ -354,38 +348,26 @@ where
     }
 }
 
-// IntoIter Unordered
-type IntoIterUnordered<T, F, Idx> = core::iter::Map<vec::IntoIter<Node<T, Idx>>, F>;
-
 impl<T, Idx> LinkedList<T, Idx> {
-    pub fn into_iter_unordered(self) -> IntoIterUnordered<T, impl FnMut(Node<T, Idx>) -> T, Idx> {
+    pub fn into_iter_unordered(self) -> impl ExactSizeIterator + DoubleEndedIterator {
         self.buf.into_iter().map(|node| node.val)
     }
 }
-// Iter Unordered
-type IterUnordered<'a, T, F, Idx> = core::iter::Map<core::slice::Iter<'a, Node<T, Idx>>, F>;
 
 impl<T, Idx> LinkedList<T, Idx>
 where
     Idx: Index,
 {
-    pub fn iter_unordered<'a>(
-        &'a self,
-    ) -> IterUnordered<'_, T, impl FnMut(&'a Node<T, Idx>) -> &'a T, Idx> {
+    pub fn iter_unordered(&self) -> impl ExactSizeIterator + DoubleEndedIterator + '_ {
         self.buf.iter().map(|node| &node.val)
     }
 }
 
-// IterMut Unordered
-type IterMutUnordered<'a, T, F, Idx> = core::iter::Map<std::slice::IterMut<'a, Node<T, Idx>>, F>;
-
 impl<T, Idx> LinkedList<T, Idx>
 where
     Idx: Index,
 {
-    pub fn iter_mut_unordered<'a>(
-        &'a mut self,
-    ) -> IterMutUnordered<'_, T, impl FnMut(&'a mut Node<T, Idx>) -> &'a mut T, Idx> {
+    pub fn iter_mut_unordered(&mut self) -> impl ExactSizeIterator + DoubleEndedIterator + '_ {
         self.buf.iter_mut().map(|node| &mut node.val)
     }
 }
