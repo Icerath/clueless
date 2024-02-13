@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use crate::HashMap;
 use core::{borrow::Borrow, fmt, hash::Hash};
 use std::hash::{BuildHasher, RandomState};

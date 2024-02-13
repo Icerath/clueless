@@ -1,3 +1,7 @@
+// Can't be forbid until I can fix the iter mut impls.
+// Potentially need lending iterators
+#![deny(unsafe_code)]
+
 use crate::vec::{self, Vec};
 use core::fmt;
 
@@ -276,7 +280,8 @@ where
         self.head = self.list.buf[self.head.usize()].next;
         let val = &mut self.list.buf[head.usize()].val;
 
-        // This makes me sad
+        // FIXME: remove this shit.
+        #[allow(unsafe_code)]
         Some(unsafe { std::mem::transmute(val) })
     }
 }
@@ -291,7 +296,8 @@ where
         self.tail = self.list.buf[self.tail.usize()].prev;
         let val = &mut self.list.buf[tail.usize()].val;
 
-        // This makes me sad
+        // FIXME: remove this shit.
+        #[allow(unsafe_code)]
         Some(unsafe { std::mem::transmute(val) })
     }
 }

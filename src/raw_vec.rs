@@ -1,3 +1,5 @@
+#![allow(unsafe_code)]
+
 use alloc::{alloc, Layout};
 use core::{
     mem,
