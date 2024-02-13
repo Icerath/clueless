@@ -43,8 +43,13 @@ impl<T> Vec<T> {
         if self.is_empty() {
             return None;
         }
+        Some(unsafe { self.pop_unchecked() })
+    }
+
+    unsafe fn pop_unchecked(&mut self) -> T {
+        debug_assert!(!self.is_empty());
         self.len -= 1;
-        Some(unsafe { self.buf.read(self.len) })
+        unsafe { self.buf.read(self.len) }
     }
 
     /// # Errors
@@ -86,7 +91,9 @@ impl<T> Vec<T> {
         }
         let len = self.len;
         self.swap(index, len - 1);
-        self.pop().ok_or(IndexNotFound)
+        // Safety:
+        // the first check guarantees len cannot be zero
+        Ok(unsafe { self.pop_unchecked() })
     }
 
     /// # Panics
