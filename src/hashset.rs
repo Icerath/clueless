@@ -5,11 +5,10 @@ use core::{
     fmt,
     hash::{BuildHasher, Hash},
 };
-use std::hash::RandomState;
 
-use crate::HashMap;
+use crate::{hasher::PlainBuildHasher, HashMap};
 
-pub struct HashSet<T, S = RandomState> {
+pub struct HashSet<T, S = PlainBuildHasher> {
     inner: HashMap<T, (), S>,
 }
 

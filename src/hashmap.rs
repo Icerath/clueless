@@ -6,11 +6,10 @@ use core::{
     hash::{BuildHasher, Hash},
     iter, mem,
 };
-use std::hash::RandomState;
 
-use crate::Vec;
+use crate::{hasher::PlainBuildHasher, Vec};
 
-pub struct HashMap<K, V, S = RandomState> {
+pub struct HashMap<K, V, S = PlainBuildHasher> {
     buckets: Box<[Bucket<K, V>]>,
     hasher: S,
 }
@@ -18,7 +17,7 @@ pub struct HashMap<K, V, S = RandomState> {
 impl<K, V> HashMap<K, V> {
     #[must_use]
     pub fn new() -> Self {
-        Self { buckets: Box::from([]), hasher: RandomState::new() }
+        Self { buckets: Box::from([]), hasher: PlainBuildHasher::default() }
     }
 }
 

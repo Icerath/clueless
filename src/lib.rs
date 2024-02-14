@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+pub mod hasher;
 pub mod hashmap;
 pub mod hashset;
 pub mod linked_list;
