@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use alloc::boxed::Box;
 use core::{
     borrow::Borrow,
     fmt,

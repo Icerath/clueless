@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 #![feature(impl_trait_in_assoc_type)]
+#![no_std]
 
 extern crate alloc;
 

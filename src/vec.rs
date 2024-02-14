@@ -1,5 +1,6 @@
 #![allow(unsafe_code)]
 
+use alloc::boxed::Box;
 use core::{
     fmt,
     mem::{self, ManuallyDrop},
