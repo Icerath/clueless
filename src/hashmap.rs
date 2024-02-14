@@ -4,7 +4,7 @@ use core::{
     borrow::Borrow,
     fmt,
     hash::{BuildHasher, Hash},
-    mem,
+    iter, mem,
 };
 use std::hash::RandomState;
 
@@ -150,10 +150,9 @@ where
     fn grow(&mut self) {
         if self.buckets.is_empty() {
             return self.buckets =
-                std::iter::repeat_with(Bucket::new).take(Self::START_CAPACITY).collect();
+                iter::repeat_with(Bucket::new).take(Self::START_CAPACITY).collect();
         }
-        let new_buckets =
-            std::iter::repeat_with(Bucket::new).take(self.buckets.len() * 2).collect();
+        let new_buckets = iter::repeat_with(Bucket::new).take(self.buckets.len() * 2).collect();
         let old_buckets = mem::replace(&mut self.buckets, new_buckets);
         for node in Vec::from(old_buckets).into_iter().flatten() {
             let bucket = self.get_bucket_unchecked(&node.key);
@@ -331,7 +330,7 @@ impl<K, V> IntoIterator for Bucket<K, V> {
 
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head;
-        std::iter::from_fn(move || {
+        iter::from_fn(move || {
             let mut current = mem::take(&mut self_current)?;
             self_current = current.next;
             current.next = None;
@@ -347,7 +346,7 @@ impl<'a, K, V> IntoIterator for &'a Bucket<K, V> {
 
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head.as_deref();
-        std::iter::from_fn(move || {
+        iter::from_fn(move || {
             let current = self_current?;
             self_current = current.next.as_deref();
             Some((&current.key, &current.val))
@@ -362,7 +361,7 @@ impl<'a, K, V> IntoIterator for &'a mut Bucket<K, V> {
 
     fn into_iter(self) -> Self::IntoIter {
         let mut self_current = self.head.as_deref_mut();
-        std::iter::from_fn(move || {
+        iter::from_fn(move || {
             let current = mem::take(&mut self_current)?;
             self_current = current.next.as_deref_mut();
             Some((&current.key, &mut current.val))

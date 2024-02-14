@@ -1,7 +1,7 @@
 // FIXME: Replace with forbid when possible.
 #![deny(unsafe_code)]
 
-use core::fmt;
+use core::{fmt, mem};
 
 use crate::vec::Vec;
 
@@ -228,7 +228,7 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 
         // FIXME: remove this shit.
         #[allow(unsafe_code)]
-        Some(unsafe { std::mem::transmute(val) })
+        Some(unsafe { mem::transmute(val) })
     }
 }
 
@@ -241,7 +241,7 @@ impl<'a, T> DoubleEndedIterator for IterMut<'a, T> {
 
         // FIXME: remove this shit.
         #[allow(unsafe_code)]
-        Some(unsafe { std::mem::transmute(val) })
+        Some(unsafe { mem::transmute(val) })
     }
 }
 
